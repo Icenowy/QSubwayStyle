@@ -16,7 +16,8 @@ SOURCES += subwaystyleplugin.cpp \
     qsubwaystyle.cpp
 
 HEADERS += subwaystyleplugin.h \
-    qsubwaystyle.h
+    qsubwaystyle.h \
+    subwaycolor.h
 OTHER_FILES += QSubwayStyle.json
 
 unix:!symbian {
