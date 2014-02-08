@@ -3,6 +3,8 @@
 
 #define WindowBackground QColor(0xFF,0xFF,0xFF)
 #define BaseBackground QColor(0xFF,0xFF,0xFF)
+#define TextColor QColor(0x33,0x33,0x33)
+#define HighLightTextColor QColor(0x00,0x00,0x00)
 
 #define ButtonBorder QColor(0x6d,0x6d,0x6d)
 #define ButtonNormalBackground QColor(0xFF,0xFF,0xFF)
@@ -15,18 +17,22 @@
 
 #define ComboBoxBorder QColor(0x6E,0x6E,0x6E)
 
+#define TabBarTabBorder QColor(0xAE,0xAE,0xAE)
+#define TabBarTabNormalBackground QColor(0xFF,0xFF,0xFF)
+#define TabBarTabActiveBackground QColor(0x6d,0x6d,0x6d)
+
+#define MenuBarActiveBackground QColor(0xEE,0xEE,0xEE)
+
 static const char * const ComboxArrawPixmap[]={
-    "8 8 2 1",
-    "# c #000000",
-    ". c None",
-    "........",
-    "........",
-    ".#....#.",
-    "..#..#..",
-    "...##...",
-    "........",
-    "........",
-    "........",
-};
+    "11 7 2 1",
+    "     c None",
+    "x    c #000000",
+    "           ",
+    "  x     x  ",
+    " xxx   xxx ",
+    "  xxxxxxx  ",
+    "   xxxxx   ",
+    "    xxx    ",
+    "     x     "};
 
 #endif // SUBWAYCOLOR_H

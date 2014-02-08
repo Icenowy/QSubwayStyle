@@ -31,6 +31,41 @@ void QSubwayStyle::drawControl(ControlElement element, const QStyleOption *optio
                 painter->fillRect(option->rect.adjusted(3,3,-3,-3),ButtonNormalBackground);
             break;
         }
+        case CE_TabBarTabShape:{
+            QPen oldPen = painter->pen();
+            painter->setPen(TabBarTabBorder);
+            painter->drawRect(option->rect.adjusted(0,0,-1,-1));
+            painter->drawRect(option->rect.adjusted(1,1,-2,-2));
+            painter->drawRect(option->rect.adjusted(2,2,-3,-3));
+            painter->setPen(oldPen);
+            //qDebug() << option->state << endl;
+            if(option->state & State_Selected)
+                painter->fillRect(option->rect.adjusted(3,3,-3,-3),TabBarTabActiveBackground);
+            //else if(option->state & )
+                //painter->fillRect(option->rect.adjusted(3,3,-3,-3),ButtonActiveBackground);
+            else
+                painter->fillRect(option->rect.adjusted(3,3,-3,-3),TabBarTabNormalBackground);
+            break;
+        }
+        case CE_MenuBarEmptyArea:{
+            break;
+        }
+        case CE_MenuBarItem:{
+            QPalette::ColorRole textRole = (QPalette::ColorRole)(((option->state & State_Enabled)) ? QPalette::Text : QPalette::Disabled);
+            if(option->state & State_HasFocus) textRole = QPalette::HighlightedText;
+            uint alignment = Qt::AlignCenter | Qt::TextShowMnemonic | Qt::TextDontClip | Qt::TextSingleLine;
+            if (!styleHint(SH_UnderlineShortcut, option, widget))
+                alignment |= Qt::TextHideMnemonic;
+            /*if(option->state & State_HasFocus)
+            {
+                painter->fillRect(option->rect.adjusted(0, 3, 0, -1),MenuBarActiveBackground);
+            }*/
+            if(const QStyleOptionMenuItem *mbi = qstyleoption_cast<const QStyleOptionMenuItem *>(option))
+            {
+                proxy()->drawItemText(painter, mbi->rect.adjusted(3, 6, -4, -5), alignment, option->palette, option->state & State_Enabled, mbi->text, textRole);
+            }
+            break;
+        }
         default:
             BaseStyle::drawControl(element,option,painter,widget);
     }
@@ -60,6 +95,8 @@ void QSubwayStyle::drawPrimitive ( PrimitiveElement elem, const QStyleOption * o
             painter->setPen(oldPen);
             return;
         }
+        case PE_FrameGroupBox:
+            return;
         default:
             BaseStyle::drawPrimitive(elem,option,painter,widget);
     }
@@ -80,6 +117,8 @@ void QSubwayStyle::polish(QPalette &pal)
 {
     pal.setColor(pal.Window,WindowBackground);
     pal.setColor(pal.Base,BaseBackground);
+    pal.setColor(pal.Text,TextColor);
+    pal.setColor(pal.HighlightedText,HighLightTextColor);
 }
 
 void QSubwayStyle::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
@@ -107,26 +146,26 @@ void QSubwayStyle::drawComplexControl(ComplexControl control, const QStyleOption
                 re = proxy()->subControlRect(CC_ComboBox, option, SC_ComboBoxFrame, widget);
                 painter->setClipRect(re);
                 painter->setPen(ComboBoxBorder);
-                painter->drawRect(option->rect.adjusted(0,0,-1,-1));
-                painter->drawRect(option->rect.adjusted(1,1,-2,-2));
-                painter->drawRect(option->rect.adjusted(2,2,-3,-3));
+                painter->drawRect(re.adjusted(0,0,-1,-1));
+                painter->drawRect(re.adjusted(1,1,-2,-2));
+                painter->drawRect(re.adjusted(2,2,-3,-3));
             }
-            if (cmb->subControls & SC_ComboBoxEditField) {
+            /*if (cmb->subControls & SC_ComboBoxEditField) {
                 re = proxy()->subControlRect(CC_ComboBox, option, SC_ComboBoxEditField, widget);
                 painter->setClipRect(re);
                 painter->setPen(ComboBoxBorder);
-                painter->drawRect(option->rect.adjusted(0,0,-1,-1));
-                painter->drawRect(option->rect.adjusted(1,1,-2,-2));
-                painter->drawRect(option->rect.adjusted(2,2,-3,-3));
-            }
+                painter->drawRect(re.adjusted(0,0,-1,-1));
+                painter->drawRect(re.adjusted(1,1,-2,-2));
+                painter->drawRect(re.adjusted(2,2,-3,-3));
+            }*/
             if (cmb->subControls & SC_ComboBoxArrow) {
                 re = proxy()->subControlRect(CC_ComboBox, option, SC_ComboBoxArrow, widget);
                 painter->setClipRect(re);
                 painter->setPen(ComboBoxBorder);
-                painter->drawRect(option->rect.adjusted(0,0,-1,-1));
-                painter->drawRect(option->rect.adjusted(1,1,-2,-2));
-                painter->drawRect(option->rect.adjusted(2,2,-3,-3));
-                painter->drawPixmap(re,QPixmap(ComboxArrawPixmap));
+                painter->drawRect(re.adjusted(0,0,-1,-1));
+                painter->drawRect(re.adjusted(1,1,-2,-2));
+                painter->drawRect(re.adjusted(2,2,-3,-3));
+                painter->drawPixmap(re.adjusted(3,3,-4,-4),QPixmap(ComboxArrawPixmap));
             }
 
             painter->restore();
