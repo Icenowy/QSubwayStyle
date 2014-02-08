@@ -171,6 +171,108 @@ void QSubwayStyle::drawComplexControl(ComplexControl control, const QStyleOption
             painter->restore();
             break;
         }
+    case CC_ScrollBar:
+        painter->save();
+        if (const QStyleOptionSlider *scrollBar = qstyleoption_cast<const QStyleOptionSlider *>(option)) {
+            bool isEnabled = scrollBar->state & State_Enabled;
+            bool reverse = scrollBar->direction == Qt::RightToLeft;
+            bool horizontal = scrollBar->orientation == Qt::Horizontal;
+            bool sunken = scrollBar->state & State_Sunken;
+
+            painter->fillRect(option->rect, option->palette.background());
+
+            QRect scrollBarSubLine = proxy()->subControlRect(control, scrollBar, SC_ScrollBarSubLine, widget);
+            QRect scrollBarAddLine = proxy()->subControlRect(control, scrollBar, SC_ScrollBarAddLine, widget);
+            QRect scrollBarSlider = proxy()->subControlRect(control, scrollBar, SC_ScrollBarSlider, widget);
+            QRect grooveRect = proxy()->subControlRect(control, scrollBar, SC_ScrollBarGroove, widget);
+
+            // paint groove
+            /*if (scrollBar->subControls & SC_ScrollBarGroove) {
+                //painter->setBrush(grooveColor);
+                painter->setPen(Qt::NoPen);
+                if (horizontal) {
+                    painter->drawRect(grooveRect);
+                    painter->setPen(darkOutline);
+                    painter->drawLine(grooveRect.topLeft(), grooveRect.topRight());
+                    painter->drawLine(grooveRect.bottomLeft(), grooveRect.bottomRight());
+                } else {
+                    painter->drawRect(grooveRect);
+                    painter->setPen(darkOutline);
+                    painter->drawLine(grooveRect.topLeft(), grooveRect.bottomLeft());
+                    painter->drawLine(grooveRect.topRight(), grooveRect.bottomRight());
+                }
+            }*/
+            //paint slider
+            if (scrollBar->subControls & SC_ScrollBarSlider) {
+                QRect pixmapRect = scrollBarSlider;
+                pixmapRect.adjust(2,2,-2,-2);
+
+                if (isEnabled) {
+                    if(option->state & State_MouseOver)
+                        painter->fillRect(pixmapRect,ScrollBarSliderHover);
+                    else if(option->state & State_Sunken)
+                        painter->fillRect(pixmapRect,ScrollBarSliderActive);
+                    else
+                        painter->fillRect(pixmapRect,ScrollBarSliderNormal);
+                } else {
+                    painter->fillRect(pixmapRect,ScrollBarSliderDisable);
+                }
+            }
+
+            // The SubLine (up/left) buttons
+            if (scrollBar->subControls & SC_ScrollBarSubLine) {
+                //int scrollBarExtent = proxy()->pixelMetric(PM_ScrollBarExtent, option, widget);
+                QRect pixmapRect = scrollBarSubLine;
+                if (isEnabled) {
+                    if(option->state & State_MouseOver)
+                        painter->fillRect(pixmapRect,ScrollBarSliderHover);
+                    else if(option->state & State_Sunken)
+                        painter->fillRect(pixmapRect,ScrollBarSliderActive);
+                    else
+                        painter->fillRect(pixmapRect,ScrollBarSliderNormal);
+                } else {
+                    painter->fillRect(pixmapRect,ScrollBarSliderDisable);
+                }
+
+                // Arrows
+                PrimitiveElement arrow;
+                if (option->state & State_Horizontal)
+                    arrow = option->direction == Qt::LeftToRight ? PE_IndicatorArrowLeft: PE_IndicatorArrowRight;
+                else
+                    arrow = PE_IndicatorArrowUp;
+                QStyleOption arrowOpt = *option;
+                arrowOpt.rect = scrollBarSubLine.adjusted(3, 3, -2, -2);
+                proxy()->drawPrimitive(arrow, &arrowOpt, painter, widget);
+
+
+                // The AddLine (down/right) button
+                if (scrollBar->subControls & SC_ScrollBarAddLine) {
+                    QRect pixmapRect = scrollBarAddLine;
+                    if (isEnabled) {
+                        if(option->state & State_MouseOver)
+                            painter->fillRect(pixmapRect,ScrollBarSliderHover);
+                        else if(option->state & State_Sunken)
+                            painter->fillRect(pixmapRect,ScrollBarSliderActive);
+                        else
+                            painter->fillRect(pixmapRect,ScrollBarSliderNormal);
+                    } else {
+                        painter->fillRect(pixmapRect,ScrollBarSliderDisable);
+                    }
+
+                    PrimitiveElement arrow;
+                    if (option->state & State_Horizontal)
+                        arrow = option->direction == Qt::LeftToRight ? PE_IndicatorArrowRight : PE_IndicatorArrowLeft;
+                    else
+                        arrow = PE_IndicatorArrowDown;
+
+                    QStyleOption arrowOpt = *option;
+                    arrowOpt.rect = scrollBarAddLine.adjusted(3, 3, -2, -2);
+                    proxy()->drawPrimitive(arrow, &arrowOpt, painter, widget);
+                }
+            }
+        }
+        painter->restore();
+        break;
     default:
             BaseStyle::drawComplexControl(control,option,painter,widget);
         }

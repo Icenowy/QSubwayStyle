@@ -23,6 +23,11 @@
 
 #define MenuBarActiveBackground QColor(0xEE,0xEE,0xEE)
 
+#define ScrollBarSliderNormal QColor(0xEE,0xEE,0xEE)
+#define ScrollBarSliderDisable QColor(0x00,0x00,0x00)
+#define ScrollBarSliderActive QColor(0xCC,0xCC,0xCC)
+#define ScrollBarSliderHover QColor(0xDD,0xDD,0xDD)
+
 static const char * const ComboxArrawPixmap[]={
     "11 7 2 1",
     "     c None",
