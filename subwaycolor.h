@@ -28,16 +28,6 @@
 #define ScrollBarSliderActive QColor(0xCC,0xCC,0xCC)
 #define ScrollBarSliderHover QColor(0xDD,0xDD,0xDD)
 
-static const char * const ComboxArrawPixmap[]={
-    "11 7 2 1",
-    "     c None",
-    "x    c #000000",
-    "           ",
-    "  x     x  ",
-    " xxx   xxx ",
-    "  xxxxxxx  ",
-    "   xxxxx   ",
-    "    xxx    ",
-    "     x     "};
+#define MenuItemBackgroundHover QColor(0xEE,0xEE,0xEE)
 
 #endif // SUBWAYCOLOR_H

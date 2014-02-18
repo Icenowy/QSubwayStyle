@@ -66,6 +66,133 @@ void QSubwayStyle::drawControl(ControlElement element, const QStyleOption *optio
             }
             break;
         }
+    case CE_MenuItem:
+   if (const QStyleOptionMenuItem *menuitem = qstyleoption_cast<const QStyleOptionMenuItem *>(option)) {
+       QPainter *p = painter;
+   int x, y, w, h;
+   menuitem->rect.getRect(&x, &y, &w, &h);
+   int tab = menuitem->tabWidth;
+   bool dis = !(menuitem->state & State_Enabled);
+   bool checked = menuitem->checkType != QStyleOptionMenuItem::NotCheckable
+   ? menuitem->checked : false;
+   bool act = menuitem->state & State_Selected;
+   // windows always has a check column, regardless whether we have an icon or not
+   int checkcol = qMax<int>(menuitem->maxIconWidth, QSubwayStyle::windowsCheckMarkWidth);
+   QBrush fill = menuitem->palette.brush(act ? QPalette::Highlight : QPalette::Button);
+   p->fillRect(menuitem->rect.adjusted(0, 0, -1, 0), fill);
+   if (menuitem->menuItemType == QStyleOptionMenuItem::Separator){
+   int yoff = y-1 + h / 2;
+   p->setPen(menuitem->palette.dark().color());
+   p->drawLine(x + 2, yoff, x + w - 4, yoff);
+   p->setPen(menuitem->palette.light().color());
+   p->drawLine(x + 2, yoff + 1, x + w - 4, yoff + 1);
+   return;
+   }
+   QRect vCheckRect = visualRect(option->direction, menuitem->rect, QRect(menuitem->rect.x(), menuitem->rect.y(), checkcol, menuitem->rect.height()));
+   if (!menuitem->icon.isNull() && checked) {
+   if (act) {
+   qDrawShadePanel(p, vCheckRect,
+   menuitem->palette, true, 1,
+   &menuitem->palette.brush(QPalette::Button));
+   } else {
+   QBrush fill(menuitem->palette.light().color(), Qt::Dense4Pattern);
+   qDrawShadePanel(p, vCheckRect, menuitem->palette, true, 1, &fill);
+   }
+   } else if (!act) {
+   p->fillRect(vCheckRect, menuitem->palette.brush(QPalette::Button));
+   }
+   // On Windows Style, if we have a checkable item and an icon we
+   // draw the icon recessed to indicate an item is checked. If we
+   // have no icon, we draw a checkmark instead.
+   if (!menuitem->icon.isNull()) {
+   QIcon::Mode mode = dis ? QIcon::Disabled : QIcon::Normal;
+   if (act && !dis)
+   mode = QIcon::Active;
+   QPixmap pixmap;
+   if (checked)
+   pixmap = menuitem->icon.pixmap(proxy()->pixelMetric(PM_SmallIconSize, option, widget), mode, QIcon::On);
+   else
+   pixmap = menuitem->icon.pixmap(proxy()->pixelMetric(PM_SmallIconSize, option, widget), mode);
+   int pixw = pixmap.width();
+   int pixh = pixmap.height();
+   if (act && !dis && !checked)
+   qDrawShadePanel(p, vCheckRect, menuitem->palette, false, 1,
+   &menuitem->palette.brush(QPalette::Button));
+   QRect pmr(0, 0, pixw, pixh);
+   pmr.moveCenter(vCheckRect.center());
+   p->setPen(menuitem->palette.text().color());
+   p->drawPixmap(pmr.topLeft(), pixmap);
+   } else if (checked) {
+   QStyleOptionMenuItem newMi = *menuitem;
+   newMi.state = State_None;
+   if (!dis)
+   newMi.state |= State_Enabled;
+   if (act)
+   newMi.state |= State_On;
+   newMi.rect = visualRect(option->direction, menuitem->rect, QRect(menuitem->rect.x() + QSubwayStyle::windowsItemFrame,
+   menuitem->rect.y() + QSubwayStyle::windowsItemFrame,
+   checkcol - 2 * QSubwayStyle::windowsItemFrame,
+   menuitem->rect.height() - 2 * QSubwayStyle::windowsItemFrame));
+   proxy()->drawPrimitive(PE_IndicatorMenuCheckMark, &newMi, p, widget);
+   }
+   p->setPen(act ? menuitem->palette.highlightedText().color() : menuitem->palette.buttonText().color());
+   QColor discol;
+   if (dis) {
+   discol = menuitem->palette.text().color();
+   p->setPen(discol);
+   }
+   int xm = int(QSubwayStyle::windowsItemFrame) + checkcol + int(QSubwayStyle::windowsItemHMargin);
+   int xpos = menuitem->rect.x() + xm;
+   QRect textRect(xpos, y + QSubwayStyle::windowsItemVMargin,
+   w - xm - QSubwayStyle::windowsRightBorder - tab + 1, h - 2 * QSubwayStyle::windowsItemVMargin);
+   QRect vTextRect = visualRect(option->direction, menuitem->rect, textRect);
+   QString s = menuitem->text;
+   if (!s.isEmpty()) { // draw text
+   p->save();
+   int t = s.indexOf(QLatin1Char('\t'));
+   int text_flags = Qt::AlignVCenter | Qt::TextShowMnemonic | Qt::TextDontClip | Qt::TextSingleLine;
+   if (!proxy()->styleHint(SH_UnderlineShortcut, menuitem, widget))
+   text_flags |= Qt::TextHideMnemonic;
+   text_flags |= Qt::AlignLeft;
+   if (t >= 0) {
+   QRect vShortcutRect = visualRect(option->direction, menuitem->rect,
+   QRect(textRect.topRight(), QPoint(menuitem->rect.right(), textRect.bottom())));
+   if (dis && !act && proxy()->styleHint(SH_EtchDisabledText, option, widget)) {
+   p->setPen(menuitem->palette.light().color());
+   p->drawText(vShortcutRect.adjusted(1,1,1,1), text_flags, s.mid(t + 1));
+   p->setPen(discol);
+   }
+   p->drawText(vShortcutRect, text_flags, s.mid(t + 1));
+   s = s.left(t);
+   }
+   QFont font = menuitem->font;
+   if (menuitem->menuItemType == QStyleOptionMenuItem::DefaultItem)
+   font.setBold(true);
+   p->setFont(font);
+   if (dis && !act && proxy()->styleHint(SH_EtchDisabledText, option, widget)) {
+   p->setPen(menuitem->palette.light().color());
+   p->drawText(vTextRect.adjusted(1,1,1,1), text_flags, s.left(t));
+   p->setPen(discol);
+   }
+   p->drawText(vTextRect, text_flags, s.left(t));
+   p->restore();
+   }
+   if (menuitem->menuItemType == QStyleOptionMenuItem::SubMenu) {// draw sub menu arrow
+   int dim = (h - 2 * QSubwayStyle::windowsItemFrame) / 2;
+   PrimitiveElement arrow;
+   arrow = (option->direction == Qt::RightToLeft) ? PE_IndicatorArrowLeft : PE_IndicatorArrowRight;
+   xpos = x + w - QSubwayStyle::windowsArrowHMargin - QSubwayStyle::windowsItemFrame - dim;
+   QRect vSubMenuRect = visualRect(option->direction, menuitem->rect, QRect(xpos, y + h / 2 - dim / 2, dim, dim));
+   QStyleOptionMenuItem newMI = *menuitem;
+   newMI.rect = vSubMenuRect;
+   newMI.state = dis ? State_None : State_Enabled;
+   if (act)
+   newMI.palette.setColor(QPalette::ButtonText,
+   newMI.palette.highlightedText().color());
+   proxy()->drawPrimitive(arrow, &newMI, p, widget);
+   }
+   }
+   break;
         default:
             BaseStyle::drawControl(element,option,painter,widget);
     }
@@ -121,6 +248,13 @@ void QSubwayStyle::polish(QPalette &pal)
     pal.setColor(pal.HighlightedText,HighLightTextColor);
 }
 
+void QSubwayStyle::polish(QApplication *application)
+{
+    QPalette p = application->palette();
+    polish(p);
+    application->setPalette(p);
+}
+
 void QSubwayStyle::drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget) const
 {
     switch(control)
@@ -162,10 +296,13 @@ void QSubwayStyle::drawComplexControl(ComplexControl control, const QStyleOption
                 re = proxy()->subControlRect(CC_ComboBox, option, SC_ComboBoxArrow, widget);
                 painter->setClipRect(re);
                 painter->setPen(ComboBoxBorder);
-                painter->drawRect(re.adjusted(0,0,-1,-1));
-                painter->drawRect(re.adjusted(1,1,-2,-2));
-                painter->drawRect(re.adjusted(2,2,-3,-3));
-                painter->drawPixmap(re.adjusted(3,3,-4,-4),QPixmap(ComboxArrawPixmap));
+                painter->drawRect(re.adjusted(0,0,1,-1));
+                painter->drawRect(re.adjusted(1,1,0,-2));
+                painter->drawRect(re.adjusted(2,2,-1,-3));
+                //painter->drawPixmap(re.adjusted(3,3,-4,-4),QPixmap(ComboxArrawPixmap));
+                QStyleOption option2;
+                option2.rect = re.adjusted(3,3,-2,-4);
+                proxy()->drawPrimitive(PE_IndicatorArrowDown,&option2,painter,widget);
             }
 
             painter->restore();
@@ -240,9 +377,9 @@ void QSubwayStyle::drawComplexControl(ComplexControl control, const QStyleOption
                     arrow = option->direction == Qt::LeftToRight ? PE_IndicatorArrowLeft: PE_IndicatorArrowRight;
                 else
                     arrow = PE_IndicatorArrowUp;
-                QStyleOption arrowOpt = *option;
-                arrowOpt.rect = scrollBarSubLine.adjusted(3, 3, -2, -2);
-                proxy()->drawPrimitive(arrow, &arrowOpt, painter, widget);
+                QStyleOption arrowoption = *option;
+                arrowoption.rect = scrollBarSubLine.adjusted(3, 3, -2, -2);
+                proxy()->drawPrimitive(arrow, &arrowoption, painter, widget);
 
 
                 // The AddLine (down/right) button
@@ -265,9 +402,9 @@ void QSubwayStyle::drawComplexControl(ComplexControl control, const QStyleOption
                     else
                         arrow = PE_IndicatorArrowDown;
 
-                    QStyleOption arrowOpt = *option;
-                    arrowOpt.rect = scrollBarAddLine.adjusted(3, 3, -2, -2);
-                    proxy()->drawPrimitive(arrow, &arrowOpt, painter, widget);
+                    QStyleOption arrowoption = *option;
+                    arrowoption.rect = scrollBarAddLine.adjusted(3, 3, -2, -2);
+                    proxy()->drawPrimitive(arrow, &arrowoption, painter, widget);
                 }
             }
         }
