@@ -78,7 +78,7 @@ void QSubwayStyle::drawControl(ControlElement element, const QStyleOption *optio
             bool act = menuitem->state & State_Selected;
             // windows always has a check column, regardless whether we have an icon or not
             int checkcol = qMax<int>(menuitem->maxIconWidth, QSubwayStyle::windowsCheckMarkWidth);
-            QBrush fill = menuitem->palette.brush(act ? QPalette::Highlight : QPalette::Button);
+            QColor fill = act ? MenuItemBackgroundHover : MenuItemBackgroundNormal;
             p->fillRect(menuitem->rect.adjusted(0, 0, -1, 0), fill);
             if (menuitem->menuItemType == QStyleOptionMenuItem::Separator){
                 int yoff = y-1 + h / 2;
@@ -94,14 +94,14 @@ void QSubwayStyle::drawControl(ControlElement element, const QStyleOption *optio
                     /*qDrawShadePanel(p, vCheckRect,
                                     menuitem->palette, true, 1,
                                     &menuitem->palette.brush(QPalette::Button));*/
-                    painter->fillRect(vCheckRect,menuitem->palette.brush(QPalette::Button));
+                    painter->fillRect(vCheckRect,MenuItemBackgroundNormal);
                 } else {
                     /*QBrush fill(menuitem->palette.light().color(), Qt::Dense4Pattern);
                     qDrawShadePanel(p, vCheckRect, menuitem->palette, true, 1, &fill);*/
-                    painter->fillRect(vCheckRect,menuitem->palette.light().color());
+                    painter->fillRect(vCheckRect,MenuItemBackgroundHover);
                 }
             } else if (!act) {
-                p->fillRect(vCheckRect, menuitem->palette.brush(QPalette::Button));
+                p->fillRect(vCheckRect, MenuItemBackgroundNormal);
             }
             // On Windows Style, if we have a checkable item and an icon we
             // draw the icon recessed to indicate an item is checked. If we
@@ -412,6 +412,88 @@ void QSubwayStyle::drawComplexControl(ComplexControl control, const QStyleOption
                 }
             }
             painter->restore();
+            break;
+        case CC_SpinBox:
+            if (const QStyleOptionSpinBox *sb = qstyleoption_cast<const QStyleOptionSpinBox *>(option)) {
+                QStyleOptionSpinBox copy = *sb;
+                PrimitiveElement pe;
+                const QStyleOption *opt = option;
+                QPainter *p = painter;
+                bool enabled = opt->state & State_Enabled;
+                if (sb->frame && (sb->subControls & SC_SpinBoxFrame)) {
+                    QBrush editBrush = sb->palette.brush(QPalette::Base);
+                    QRect r = proxy()->subControlRect(CC_SpinBox, sb, SC_SpinBoxFrame, widget);
+                    QPalette shadePal = sb->palette;
+                    shadePal.setColor(QPalette::Midlight, shadePal.button().color());
+                    qDrawWinPanel(p, r, shadePal, true, &editBrush);
+                }
+                QPalette shadePal(opt->palette);
+                shadePal.setColor(QPalette::Button, opt->palette.light().color());
+                shadePal.setColor(QPalette::Light, opt->palette.button().color());
+                if (sb->subControls & SC_SpinBoxUp) {
+                    copy.subControls = SC_SpinBoxUp;
+                    QPalette pal2 = sb->palette;
+                    if (!(sb->stepEnabled & QAbstractSpinBox::StepUpEnabled)) {
+                        pal2.setCurrentColorGroup(QPalette::Disabled);
+                        copy.state &= ~State_Enabled;
+                    }
+                    copy.palette = pal2;
+                    if (sb->activeSubControls == SC_SpinBoxUp && (sb->state & State_Sunken)) {
+                        copy.state |= State_On;
+                        copy.state |= State_Sunken;
+                    } else {
+                        copy.state |= State_Raised;
+                        copy.state &= ~State_Sunken;
+                    }
+                    pe = (sb->buttonSymbols == QAbstractSpinBox::PlusMinus ? PE_IndicatorSpinPlus
+                                                                           : PE_IndicatorSpinUp);
+                    copy.rect = proxy()->subControlRect(CC_SpinBox, sb, SC_SpinBoxUp, widget);
+                    qDrawWinButton(p, copy.rect, shadePal, copy.state & (State_Sunken | State_On),
+                                   &copy.palette.brush(QPalette::Button));
+                    copy.rect.adjust(4, 1, -5, -1);
+                    if ((!enabled || !(sb->stepEnabled & QAbstractSpinBox::StepUpEnabled))
+                            && proxy()->styleHint(SH_EtchDisabledText, opt, widget) )
+                    {
+                        QStyleOptionSpinBox lightCopy = copy;
+                        lightCopy.rect.adjust(1, 1, 1, 1);
+                        lightCopy.palette.setBrush(QPalette::ButtonText, copy.palette.light());
+                        proxy()->drawPrimitive(pe, &lightCopy, p, widget);
+                    }
+                    proxy()->drawPrimitive(pe, &copy, p, widget);
+                }
+                if (sb->subControls & SC_SpinBoxDown) {
+                    copy.subControls = SC_SpinBoxDown;
+                    copy.state = sb->state;
+                    QPalette pal2 = sb->palette;
+                    if (!(sb->stepEnabled & QAbstractSpinBox::StepDownEnabled)) {
+                        pal2.setCurrentColorGroup(QPalette::Disabled);
+                        copy.state &= ~State_Enabled;
+                    }
+                    copy.palette = pal2;
+                    if (sb->activeSubControls == SC_SpinBoxDown && (sb->state & State_Sunken)) {
+                        copy.state |= State_On;
+                        copy.state |= State_Sunken;
+                    } else {
+                        copy.state |= State_Raised;
+                        copy.state &= ~State_Sunken;
+                    }
+                    pe = (sb->buttonSymbols == QAbstractSpinBox::PlusMinus ? PE_IndicatorSpinMinus
+                                                                           : PE_IndicatorSpinDown);
+                    copy.rect = proxy()->subControlRect(CC_SpinBox, sb, SC_SpinBoxDown, widget);
+                    qDrawWinButton(p, copy.rect, shadePal, copy.state & (State_Sunken | State_On),
+                                   &copy.palette.brush(QPalette::Button));
+                    copy.rect.adjust(4, 0, -5, -1);
+                    if ((!enabled || !(sb->stepEnabled & QAbstractSpinBox::StepDownEnabled))
+                            && proxy()->styleHint(SH_EtchDisabledText, opt, widget) )
+                    {
+                        QStyleOptionSpinBox lightCopy = copy;
+                        lightCopy.rect.adjust(1, 1, 1, 1);
+                        lightCopy.palette.setBrush(QPalette::ButtonText, copy.palette.light());
+                        proxy()->drawPrimitive(pe, &lightCopy, p, widget);
+                    }
+                    proxy()->drawPrimitive(pe, &copy, p, widget);
+                }
+            }
             break;
         default:
             BaseStyle::drawComplexControl(control,option,painter,widget);

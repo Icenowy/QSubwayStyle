@@ -29,5 +29,6 @@
 #define ScrollBarSliderHover QColor(0xDD,0xDD,0xDD)
 
 #define MenuItemBackgroundHover QColor(0xEE,0xEE,0xEE)
+#define MenuItemBackgroundNormal QColor(0xFF,0xFF,0xFF)
 
 #endif // SUBWAYCOLOR_H
